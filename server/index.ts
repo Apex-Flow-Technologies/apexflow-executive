@@ -15,7 +15,7 @@ app.use(express.json());
 // Set up multer to store uploaded files in memory
 const upload = multer({ storage: multer.memoryStorage() });
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
 const SYSTEM_INSTRUCTION = `
 You are the AI engine for ApexFlow Executive, a financial and deal pipeline dashboard. 
