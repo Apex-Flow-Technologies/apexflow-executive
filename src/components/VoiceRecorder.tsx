@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Mic, Square, Loader, History, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Mic, Square, Loader, History, ChevronDown, CheckCircle2, X } from 'lucide-react';
 import { useAppStore } from '../store/store';
 
 const VoiceRecorder: React.FC = () => {
@@ -8,6 +8,7 @@ const VoiceRecorder: React.FC = () => {
   const [showTray, setShowTray] = useState(false);
   
   const transcripts = useAppStore(state => state.transcripts);
+  const deleteTranscript = useAppStore(state => state.deleteTranscript);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   
@@ -129,8 +130,14 @@ const VoiceRecorder: React.FC = () => {
             {transcripts.length === 0 ? (
               <p className="text-xs text-gray-500 text-center">No transcripts yet.</p>
             ) : transcripts.map(t => (
-              <div key={t.id} className="bg-navy-900 border border-royal-deep/20 rounded-lg p-3 text-sm">
-                <p className="text-gray-300 italic mb-2">"{t.text}"</p>
+              <div key={t.id} className="bg-navy-900 border border-royal-deep/20 rounded-lg p-3 text-sm relative group">
+                <button 
+                  onClick={() => deleteTranscript(t.id)} 
+                  className="absolute top-2 right-2 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={14} />
+                </button>
+                <p className="text-gray-300 italic mb-2 pr-6">"{t.text}"</p>
                 <div className="flex items-start gap-1 text-cyan-wave bg-cyan-wave/10 p-1.5 rounded text-xs border border-cyan-wave/20">
                   <CheckCircle2 size={14} className="shrink-0 mt-0.5" />
                   <span>{t.actionTaken}</span>

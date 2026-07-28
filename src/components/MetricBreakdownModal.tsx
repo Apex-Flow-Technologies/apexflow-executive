@@ -1,14 +1,16 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, Edit2, Trash2 } from 'lucide-react';
 
 interface MetricBreakdownModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  data: { label: string; amount: number; secondary?: string }[];
+  data: { id?: string; label: string; amount: number; secondary?: string }[];
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-const MetricBreakdownModal: React.FC<MetricBreakdownModalProps> = ({ isOpen, onClose, title, data }) => {
+const MetricBreakdownModal: React.FC<MetricBreakdownModalProps> = ({ isOpen, onClose, title, data, onEdit, onDelete }) => {
   if (!isOpen) return null;
 
   const formatCurrency = (amount: number) => {
@@ -34,11 +36,23 @@ const MetricBreakdownModal: React.FC<MetricBreakdownModalProps> = ({ isOpen, onC
             <div className="space-y-4">
               {data.map((item, index) => (
                 <div key={index} className="flex justify-between items-center p-3 bg-navy-900/50 rounded-lg border border-royal-deep/20">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium text-white">{item.label}</p>
                     {item.secondary && <p className="text-xs text-gray-400">{item.secondary}</p>}
                   </div>
-                  <p className="font-mono text-cyan-wave font-bold">{formatCurrency(item.amount)}</p>
+                  <div className="flex items-center gap-4">
+                    <p className="font-mono text-cyan-wave font-bold">{formatCurrency(item.amount)}</p>
+                    {item.id && onEdit && onDelete && (
+                      <div className="flex gap-2">
+                        <button onClick={() => onEdit(item.id!)} className="text-gray-400 hover:text-cyan-wave transition-colors">
+                          <Edit2 size={16} />
+                        </button>
+                        <button onClick={() => onDelete(item.id!)} className="text-gray-400 hover:text-red-400 transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

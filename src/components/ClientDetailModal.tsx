@@ -12,6 +12,7 @@ interface ClientDetailModalProps {
 const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ clientId, onClose }) => {
   const clients = useAppStore(state => state.clients);
   const updateClient = useAppStore(state => state.updateClient);
+  const deleteClient = useAppStore(state => state.deleteClient);
   
   const [formData, setFormData] = useState<Client | null>(null);
 
@@ -28,6 +29,13 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ clientId, onClose
     e.preventDefault();
     updateClient(clientId, formData);
     onClose();
+  };
+
+  const handleDelete = () => {
+    if (window.confirm(`Are you sure you want to delete ${formData.name}? This will also delete any associated meetings.`)) {
+      deleteClient(clientId);
+      onClose();
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -104,9 +112,14 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ clientId, onClose
             <textarea name="notes" value={formData.notes} onChange={handleChange} rows={4} className="w-full bg-navy-900 border border-royal-deep/30 rounded-lg p-2 text-white outline-none focus:border-cyan-wave"></textarea>
           </div>
 
-          <div className="pt-4 border-t border-royal-deep/30 flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-gray-400 hover:text-white transition-colors">Cancel</button>
-            <button type="submit" className="px-6 py-2 rounded-lg bg-cyan-wave hover:bg-cyan-wave/80 text-white font-semibold transition-colors">Save Changes</button>
+          <div className="pt-4 border-t border-royal-deep/30 flex justify-between items-center">
+            <button type="button" onClick={handleDelete} className="px-4 py-2 rounded-lg text-red-400 hover:bg-red-400/10 hover:text-red-300 transition-colors">
+              Delete Client
+            </button>
+            <div className="flex gap-3">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-gray-400 hover:text-white transition-colors">Cancel</button>
+              <button type="submit" className="px-6 py-2 rounded-lg bg-cyan-wave hover:bg-cyan-wave/80 text-white font-semibold transition-colors">Save Changes</button>
+            </div>
           </div>
         </form>
       </div>

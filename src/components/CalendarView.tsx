@@ -7,6 +7,7 @@ const CalendarView: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedDateStr, setSelectedDateStr] = useState('');
+  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
 
   // Simple calendar logic
   const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
@@ -22,6 +23,14 @@ const CalendarView: React.FC = () => {
   const handleDateClick = (day: number) => {
     const formattedDate = `${selectedDate.getFullYear()}-${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     setSelectedDateStr(formattedDate);
+    setSelectedMeetingId(null);
+    setShowScheduleModal(true);
+  };
+
+  const handleMeetingClick = (e: React.MouseEvent, m: any, dateStr: string) => {
+    e.stopPropagation();
+    setSelectedDateStr(dateStr);
+    setSelectedMeetingId(m.id);
     setShowScheduleModal(true);
   };
 
@@ -59,7 +68,7 @@ const CalendarView: React.FC = () => {
               <span className="text-gray-300 font-semibold">{day}</span>
               <div className="mt-2 space-y-1">
                 {dayMeetings.map(m => (
-                  <div key={m.id} className="text-xs bg-cyan-wave/20 text-cyan-wave p-1 rounded truncate border border-cyan-wave/30 relative group">
+                  <div key={m.id} onClick={(e) => handleMeetingClick(e, m, dateStr)} className="cursor-pointer text-xs bg-cyan-wave/20 text-cyan-wave p-1 rounded truncate border border-cyan-wave/30 relative group">
                     {m.time} - {m.title}
                     
                     {/* Tooltip with GCal link */}
@@ -77,32 +86,60 @@ const CalendarView: React.FC = () => {
         })}
       </div>
 
-      <ScheduleModal isOpen={showScheduleModal} onClose={() => setShowScheduleModal(false)} date={selectedDateStr} clients={clients} />
+      <ScheduleModal isOpen={showScheduleModal} onClose={() => setShowScheduleModal(false)} date={selectedDateStr} clients={clients} meetingId={selectedMeetingId} />
     </div>
   );
 };
 
 // Extracted inner modal to keep it simple
-const ScheduleModal = ({ isOpen, onClose, date, clients }: any) => {
+const ScheduleModal = ({ isOpen, onClose, date, clients, meetingId }: any) => {
   const addMeeting = useAppStore(state => state.addMeeting);
+  const updateMeeting = useAppStore(state => state.updateMeeting);
+  const deleteMeeting = useAppStore(state => state.deleteMeeting);
+  const meetings = useAppStore(state => state.meetings);
+
   const [formData, setFormData] = useState({ title: '', time: '09:00', clientId: '' });
+
+  React.useEffect(() => {
+    if (meetingId && isOpen) {
+      const meeting = meetings.find((m: any) => m.id === meetingId);
+      if (meeting) {
+        setFormData({ title: meeting.title, time: meeting.time, clientId: meeting.clientId || '' });
+      }
+    } else if (isOpen) {
+      setFormData({ title: '', time: '09:00', clientId: '' });
+    }
+  }, [meetingId, isOpen, meetings]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if(formData.clientId && !formData.title) {
-      const client = clients.find((c:any) => c.id === formData.clientId);
-      formData.title = `Meeting with ${client?.name}`;
+    const finalData = { ...formData };
+    if(finalData.clientId && !finalData.title) {
+      const client = clients.find((c:any) => c.id === finalData.clientId);
+      finalData.title = `Meeting with ${client?.name}`;
     }
-    addMeeting({ id: Date.now().toString(), date, ...formData });
+
+    if (meetingId) {
+      updateMeeting(meetingId, { date, ...finalData });
+    } else {
+      addMeeting({ id: Date.now().toString(), date, ...finalData });
+    }
     onClose();
+  };
+
+  const handleDelete = () => {
+    if (window.confirm(`Are you sure you want to delete this meeting?`)) {
+      deleteMeeting(meetingId);
+      onClose();
+    }
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-navy-800 border border-royal-deep rounded-2xl w-full max-w-sm p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h3 className="text-lg font-bold text-white mb-4">Schedule for {date}</h3>
+        <h3 className="text-lg font-bold text-white mb-4">{meetingId ? 'Edit' : 'Schedule'} for {date}</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1">Time</label>
@@ -119,9 +156,16 @@ const ScheduleModal = ({ isOpen, onClose, date, clients }: any) => {
             <label className="block text-sm text-gray-400 mb-1">Title</label>
             <input type="text" placeholder={formData.clientId ? 'Auto-generated if empty' : 'Meeting Title'} value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-navy-900 border border-royal-deep/30 rounded p-2 text-white" required={!formData.clientId} />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-400">Cancel</button>
-            <button type="submit" className="px-4 py-2 bg-cyan-wave text-white rounded">Schedule</button>
+          <div className="flex justify-between items-center pt-2">
+            {meetingId ? (
+              <button type="button" onClick={handleDelete} className="text-sm text-red-400 hover:text-red-300">Delete</button>
+            ) : (
+              <div></div>
+            )}
+            <div className="flex gap-2">
+              <button type="button" onClick={onClose} className="px-4 py-2 text-gray-400">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-cyan-wave text-white rounded">Save</button>
+            </div>
           </div>
         </form>
       </div>

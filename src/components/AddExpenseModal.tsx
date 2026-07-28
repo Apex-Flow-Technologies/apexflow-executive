@@ -7,10 +7,13 @@ import type { ExpenseItem } from '../store/store';
 interface AddExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
+  expenseId?: string;
 }
 
-const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) => {
+const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, expenseId }) => {
   const addExpense = useAppStore(state => state.addExpense);
+  const updateExpense = useAppStore(state => state.updateExpense);
+  const expenses = useAppStore(state => state.expenses);
 
   const [formData, setFormData] = useState({
     type: 'Expense' as 'Expense' | 'Drawing',
@@ -19,15 +22,41 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
     date: new Date().toISOString().split('T')[0]
   });
 
+  React.useEffect(() => {
+    if (expenseId && isOpen) {
+      const expense = expenses.find(e => e.id === expenseId);
+      if (expense) {
+        setFormData({
+          type: expense.type,
+          source: expense.source,
+          amount: expense.amount,
+          date: expense.date
+        });
+      }
+    } else if (isOpen) {
+      // Reset form when opened for a new record
+      setFormData({
+        type: 'Expense' as 'Expense' | 'Drawing',
+        source: '',
+        amount: 0,
+        date: new Date().toISOString().split('T')[0]
+      });
+    }
+  }, [expenseId, isOpen, expenses]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newExpense: ExpenseItem = {
-      id: Date.now().toString(),
-      ...formData
-    };
-    addExpense(newExpense);
+    if (expenseId) {
+      updateExpense(expenseId, formData);
+    } else {
+      const newExpense: ExpenseItem = {
+        id: Date.now().toString(),
+        ...formData
+      };
+      addExpense(newExpense);
+    }
     onClose();
   };
 
@@ -43,7 +72,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-navy-800 border border-royal-deep rounded-2xl w-full max-w-sm shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center p-6 border-b border-royal-deep/30">
-          <h2 className="text-xl font-bold text-white">Add Financial Record</h2>
+          <h2 className="text-xl font-bold text-white">{expenseId ? 'Edit' : 'Add'} Financial Record</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
             <X size={20} />
           </button>

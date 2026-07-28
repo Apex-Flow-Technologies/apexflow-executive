@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useAppStore } from '../store/store';
 import MetricBreakdownModal from './MetricBreakdownModal';
+import AddExpenseModal from './AddExpenseModal';
 
 const MetricCards: React.FC = () => {
-  const { clients, expenses } = useAppStore();
+  const { clients, expenses, deleteExpense } = useAppStore();
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [editExpenseId, setEditExpenseId] = useState<string | null>(null);
 
   const businessExpenses = useMemo(() => expenses.filter(e => e.type === 'Expense').reduce((sum, e) => sum + e.amount, 0), [expenses]);
   const personalDrawings = useMemo(() => expenses.filter(e => e.type === 'Drawing').reduce((sum, e) => sum + e.amount, 0), [expenses]);
@@ -21,13 +23,13 @@ const MetricCards: React.FC = () => {
   const getBreakdownData = (type: string) => {
     switch (type) {
       case 'Monthly Retainers':
-        return clients.filter(c => c.monthlyRetainer > 0).map(c => ({ label: c.name, amount: c.monthlyRetainer, secondary: c.projectName }));
+        return clients.filter(c => c.monthlyRetainer > 0).map(c => ({ id: c.id, label: c.name, amount: c.monthlyRetainer, secondary: c.projectName }));
       case 'Lump-Sum Revenue':
-        return clients.filter(c => c.lumpSum > 0).map(c => ({ label: c.name, amount: c.lumpSum, secondary: c.projectName }));
+        return clients.filter(c => c.lumpSum > 0).map(c => ({ id: c.id, label: c.name, amount: c.lumpSum, secondary: c.projectName }));
       case 'Business Expenses':
-        return expenses.filter(e => e.type === 'Expense').map(e => ({ label: e.source, amount: e.amount, secondary: e.date }));
+        return expenses.filter(e => e.type === 'Expense').map(e => ({ id: e.id, label: e.source, amount: e.amount, secondary: e.date }));
       case 'Personal Drawings':
-        return expenses.filter(e => e.type === 'Drawing').map(e => ({ label: e.source, amount: e.amount, secondary: e.date }));
+        return expenses.filter(e => e.type === 'Drawing').map(e => ({ id: e.id, label: e.source, amount: e.amount, secondary: e.date }));
       default:
         return [];
     }
@@ -58,6 +60,24 @@ const MetricCards: React.FC = () => {
         onClose={() => setActiveModal(null)} 
         title={activeModal || ''}
         data={activeModal ? getBreakdownData(activeModal) : []}
+        onEdit={(id) => {
+          if (activeModal === 'Business Expenses' || activeModal === 'Personal Drawings') {
+            setEditExpenseId(id);
+          }
+        }}
+        onDelete={(id) => {
+          if (activeModal === 'Business Expenses' || activeModal === 'Personal Drawings') {
+            if (window.confirm('Are you sure you want to delete this financial record?')) {
+              deleteExpense(id);
+            }
+          }
+        }}
+      />
+
+      <AddExpenseModal 
+        isOpen={!!editExpenseId} 
+        onClose={() => setEditExpenseId(null)} 
+        expenseId={editExpenseId || undefined}
       />
     </>
   );

@@ -50,6 +50,12 @@ interface AppState {
   addExpense: (expense: ExpenseItem) => void;
   addMeeting: (meeting: Meeting) => void;
   addTranscript: (transcript: Transcript) => void;
+  deleteClient: (id: string) => void;
+  updateExpense: (id: string, updates: Partial<ExpenseItem>) => void;
+  deleteExpense: (id: string) => void;
+  updateMeeting: (id: string, updates: Partial<Meeting>) => void;
+  deleteMeeting: (id: string) => void;
+  deleteTranscript: (id: string) => void;
   setMockData: () => void;
 }
 
@@ -81,67 +87,36 @@ export const useAppStore = create<AppState>((set) => ({
     transcripts: [transcript, ...state.transcripts]
   })),
 
+  deleteClient: (id) => set((state) => ({
+    clients: state.clients.filter((c) => c.id !== id),
+    // Also cleanup meetings related to client
+    meetings: state.meetings.filter((m) => m.clientId !== id)
+  })),
+
+  updateExpense: (id, updates) => set((state) => ({
+    expenses: state.expenses.map((e) => e.id === id ? { ...e, ...updates } : e)
+  })),
+
+  deleteExpense: (id) => set((state) => ({
+    expenses: state.expenses.filter((e) => e.id !== id)
+  })),
+
+  updateMeeting: (id, updates) => set((state) => ({
+    meetings: state.meetings.map((m) => m.id === id ? { ...m, ...updates } : m)
+  })),
+
+  deleteMeeting: (id) => set((state) => ({
+    meetings: state.meetings.filter((m) => m.id !== id)
+  })),
+
+  deleteTranscript: (id) => set((state) => ({
+    transcripts: state.transcripts.filter((t) => t.id !== id)
+  })),
+
   setMockData: () => set({
-    expenses: [
-      { id: 'e1', type: 'Expense', source: 'Software Licenses', amount: 1200, date: '2026-07-25' },
-      { id: 'e2', type: 'Expense', source: 'Marketing Ads', amount: 3300, date: '2026-07-26' },
-      { id: 'd1', type: 'Drawing', source: 'Executive Salary', amount: 8000, date: '2026-07-27' }
-    ],
-    clients: [
-      {
-        id: '1',
-        name: 'Acme Corp',
-        contactInfo: 'john@acme.com',
-        leadQuality: 'Hot',
-        projectName: 'Enterprise Dashboard',
-        notes: 'Needs demo next week',
-        dealStage: 'Demo',
-        monthlyRetainer: 5000,
-        lumpSum: 0,
-      },
-      {
-        id: '2',
-        name: 'Stark Industries',
-        contactInfo: 'tony@stark.com',
-        leadQuality: 'Warm',
-        projectName: 'AI Integration',
-        notes: 'Discussing budget',
-        dealStage: 'Talking',
-        monthlyRetainer: 0,
-        lumpSum: 25000,
-      },
-      {
-        id: '3',
-        name: 'Wayne Enterprises',
-        contactInfo: 'bruce@wayne.com',
-        leadQuality: 'Hot',
-        projectName: 'Security Audit',
-        notes: 'Contract sent',
-        dealStage: 'Confirmation',
-        monthlyRetainer: 10000,
-        lumpSum: 5000,
-      },
-      {
-        id: '4',
-        name: 'Oscorp',
-        contactInfo: 'norman@oscorp.com',
-        leadQuality: 'Cold',
-        projectName: 'Biotech UI',
-        notes: 'Following up next month',
-        dealStage: 'After Demo',
-        monthlyRetainer: 0,
-        lumpSum: 12000,
-      }
-    ],
-    meetings: [
-      {
-        id: 'm1',
-        title: 'Acme Corp Demo',
-        date: '2026-07-28',
-        time: '14:00',
-        clientId: '1',
-      }
-    ],
+    expenses: [],
+    clients: [],
+    meetings: [],
     transcripts: []
   })
 }));
