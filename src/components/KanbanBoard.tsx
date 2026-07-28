@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useAppStore } from '../store/store';
 import type { DealStage } from '../store/store';
-import { GripVertical, MoreHorizontal } from 'lucide-react';
+import { GripVertical, MoreHorizontal, Trash2 } from 'lucide-react';
 import ClientDetailModal from './ClientDetailModal';
 
 const STAGES: DealStage[] = ['Talking', 'Demo', 'Confirmation', 'After Demo'];
@@ -11,6 +11,7 @@ const STAGES: DealStage[] = ['Talking', 'Demo', 'Confirmation', 'After Demo'];
 const KanbanBoard: React.FC = () => {
   const clients = useAppStore((state) => state.clients);
   const updateClientStage = useAppStore((state) => state.updateClientStage);
+  const deleteClient = useAppStore((state) => state.deleteClient);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
   const handleDragEnd = (result: DropResult) => {
@@ -59,10 +60,18 @@ const KanbanBoard: React.FC = () => {
                             {...provided.draggableProps}
                             className={`mb-3 bg-navy-900 border ${snapshot.isDragging ? 'border-cyan-wave shadow-lg shadow-cyan-wave/20' : 'border-royal-deep/30'} p-4 rounded-lg flex flex-col gap-2 relative`}
                           >
-                            <div className="absolute top-4 right-2 text-gray-500 hover:text-white cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedClientId(client.id); }}>
-                              <MoreHorizontal size={18} />
+                            <div className="absolute top-4 right-2 flex gap-1 items-center">
+                              <div className="text-gray-500 hover:text-white cursor-pointer p-1" onClick={(e) => { e.stopPropagation(); setSelectedClientId(client.id); }}>
+                                <MoreHorizontal size={16} />
+                              </div>
+                              <div className="text-gray-500 hover:text-red-400 cursor-pointer p-1" onClick={(e) => { 
+                                e.stopPropagation(); 
+                                if (window.confirm(`Delete ${client.name}?`)) deleteClient(client.id); 
+                              }}>
+                                <Trash2 size={16} />
+                              </div>
                             </div>
-                            <div className="absolute top-4 right-8 text-gray-500 cursor-grab active:cursor-grabbing" {...provided.dragHandleProps}>
+                            <div className="absolute top-4 right-16 text-gray-500 cursor-grab active:cursor-grabbing" {...provided.dragHandleProps}>
                               <GripVertical size={16} />
                             </div>
                             

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { useAppStore } from '../store/store';
 import ClientDetailModal from './ClientDetailModal';
 
 const ClientList: React.FC = () => {
   const clients = useAppStore((state) => state.clients);
+  const deleteClient = useAppStore((state) => state.deleteClient);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
   const getLeadQualityColor = (quality: string) => {
@@ -28,6 +30,7 @@ const ClientList: React.FC = () => {
               <th className="p-4 font-semibold text-gray-300">Retainer</th>
               <th className="p-4 font-semibold text-gray-300">Lump Sum</th>
               <th className="p-4 font-semibold text-gray-300">Notes</th>
+              <th className="p-4 font-semibold text-gray-300 w-12"></th>
             </tr>
           </thead>
           <tbody>
@@ -52,6 +55,17 @@ const ClientList: React.FC = () => {
                   {client.lumpSum > 0 ? `₹${client.lumpSum}` : '-'}
                 </td>
                 <td className="p-4 text-gray-400 text-sm max-w-xs truncate">{client.notes}</td>
+                <td className="p-4">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`Delete ${client.name}?`)) deleteClient(client.id);
+                    }} 
+                    className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
